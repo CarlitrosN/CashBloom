@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo_pagina|default:"Confirmar Eliminación Venta Proyectada" }}{% endblock title %}
+
+{% block content %}
+    <h1 class="text-2xl font-bold text-red-700 mb-4">{{ titulo_pagina }}</h1>
+
+    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 max-w-xl mx-auto">
+        <p class="text-lg text-gray-800 mb-4">
+            ¿Está seguro de que desea eliminar permanentemente la Venta Proyectada:
+            <br>
+            <strong class="font-semibold">{{ object.descripcion|truncatechars:50|default:object.id }}</strong>
+            {% if object.cliente %}para el cliente <strong class="font-semibold">{{ object.cliente.nombre }}</strong>{% endif %}?
+        </p>
+        <p class="text-sm text-red-600 mb-6">Esta acción no se puede deshacer.</p>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="flex justify-end space-x-3">
+                 {# Volver al detalle si existe, si no a la lista #}
+                 <a href="{% if object.pk %}{% url 'gestion:venta_proyectada_detail' object.pk %}{% else %}{% url 'gestion:pipeline_ventas' %}{% endif %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg shadow transition duration-300 ease-in-out">
+                    Cancelar
+                </a>
+                <button type="submit" class="bg-red-600 hover:bg-red-800 text-white font-bold py-2 px-4 rounded-lg shadow transition duration-300 ease-in-out">
+                    Sí, Eliminar Proyección
+                </button>
+            </div>
+        </form>
+    </div>
+
+{% endblock content %}
