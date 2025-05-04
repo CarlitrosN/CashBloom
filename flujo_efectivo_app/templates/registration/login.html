@@ -1,0 +1,128 @@
+{% comment %}
+Archivo: templates/registration/login.html
+Página de Login personalizada para CashBloom - Adaptada al nuevo diseño y colores.
+{% endcomment %}
+
+{% load static tailwind_tags i18n %}
+
+<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"es" }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar Sesión | CashBloom</title>
+  {% tailwind_css %}
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: linear-gradient(to bottom right, #F3F4FF, #FFFFFF);
+    }
+    .message {
+      padding: .75rem;
+      margin-bottom: 1rem;
+      border-radius: .375rem;
+      border-width: 1px;
+      font-size: .875rem;
+    }
+    .message.error {
+      background-color: #fee2e2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+    .form-input-base {
+      @apply mt-1 block w-full border border-[#A0B9FF] rounded-md shadow-sm py-2 px-3 text-sm;
+      @apply focus:outline-none focus:border-[#5C4DFF] focus:ring-1 focus:ring-[#5C4DFF];
+    }
+    .input-with-icon { @apply pl-10; }
+    .input-icon    { @apply absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none; }
+    .input-error   { @apply border-red-500 !important; }
+    .input-error:focus { @apply border-red-500 ring-red-500 !important; }
+  </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+  <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-xl w-full max-w-md border border-[#A0B9FF]">
+
+    <div class="text-center mb-10">
+      <h1 class="text-3xl font-bold mb-2 text-[#0F3D2E]">
+        <a href="{% url 'login' %}">CashBloom</a>
+      </h1>
+      <p class="text-sm text-[#6B7280]">Inicia sesión para gestionar tu flujo de efectivo</p>
+    </div>
+
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="message error" role="alert">
+          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+      {% endif %}
+
+      <div>
+        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-[#374151] mb-1">
+          Nombre de usuario
+        </label>
+        <div class="relative mt-1 rounded-md shadow-sm">
+          <div class="input-icon">
+            <svg class="h-5 w-5 text-[#A0B9FF]" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+            </svg>
+          </div>
+          <input
+            type="text"
+            name="{{ form.username.name }}"
+            id="{{ form.username.id_for_label }}"
+            value="{{ form.username.value|default:'' }}"
+            class="form-input-base input-with-icon {% if form.username.errors %}input-error{% endif %}"
+            placeholder="tu_usuario"
+            required
+            autofocus>
+        </div>
+        {% if form.username.errors %}
+          <p class="text-red-600 text-xs italic mt-1">{{ form.username.errors|striptags }}</p>
+        {% endif %}
+      </div>
+
+      <div>
+        <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-[#374151] mb-1">
+          Contraseña
+        </label>
+        <div class="relative mt-1 rounded-md shadow-sm">
+          <input
+            type="password"
+            name="{{ form.password.name }}"
+            id="{{ form.password.id_for_label }}"
+            class="form-input-base {% if form.password.errors %}input-error{% endif %}"
+            placeholder="••••••••"
+            required>
+        </div>
+        {% if form.password.errors %}
+          <p class="text-red-600 text-xs italic mt-1">{{ form.password.errors|striptags }}</p>
+        {% endif %}
+      </div>
+
+      <input type="hidden" name="next" value="{{ next|default:'' }}">
+
+      <div class="pt-3">
+        <button
+          type="submit"
+          class="w-full flex justify-center py-2.5 px-4 rounded-md shadow-sm text-sm font-medium text-white transition duration-150 ease-in-out"
+          style="background-color: #065f46;">
+          Iniciar Sesión
+        </button>
+      </div>
+
+      <div class="text-sm text-center">
+        <a href="#" class="font-medium text-[#D97706] hover:text-[#FFB020]">
+          ¿Olvidaste tu contraseña?
+        </a>
+      </div>
+    </form>
+
+  </div>
+
+</body>
+</html>
