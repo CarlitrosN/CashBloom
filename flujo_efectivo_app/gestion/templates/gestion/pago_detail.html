@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load humanize %}
+
+{% block title %}{{ titulo_pagina|default:"Detalle Pago" }}{% endblock title %}
+
+{% block content %}
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+  <h1 class="text-2xl md:text-3xl font-bold text-gray-800">{{ titulo_pagina }}</h1>
+  <div class="flex space-x-2 flex-shrink-0">
+    <a href="{% url 'gestion:pago_list' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-3 rounded-lg shadow text-xs sm:text-sm transition duration-300 ease-in-out inline-flex items-center">
+      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+      Lista Pagos
+    </a>
+    <a href="{% url 'gestion:pago_update' pago.pk %}" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-3 rounded-lg shadow text-xs sm:text-sm transition duration-300 ease-in-out inline-flex items-center">
+      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      Editar
+    </a>
+    <a href="{% url 'gestion:pago_delete' pago.pk %}" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-3 rounded-lg shadow text-xs sm:text-sm transition duration-300 ease-in-out inline-flex items-center">
+      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      Eliminar
+    </a>
+  </div>
+</div>
+
+<div class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200 space-y-6">
+  <section class="mb-8">
+    <h2 class="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-2 mb-4">Información General</h2>
+    <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+      <div><dt class="font-medium text-gray-500">Nº Doc. Proveedor</dt><dd class="mt-1 text-gray-900 font-semibold">{{ pago.numero_documento|default:"-" }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Proveedor</dt><dd class="mt-1 text-gray-900">{{ pago.proveedor.nombre|default:"-" }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Fecha Emisión Fact.</dt><dd class="mt-1 text-gray-900">{{ pago.fecha_emision_factura|date:"d/m/Y" }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Tipo Compra/Gasto</dt><dd class="mt-1 text-gray-900">{{ pago.get_tipo_compra_display }}</dd></div>
+      <div><dt class="font-medium text-gray-500">País Proveedor</dt><dd class="mt-1 text-gray-900">{{ pago.pais_proveedor|default:"-" }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Moneda Factura</dt><dd class="mt-1 text-gray-900 font-semibold">{{ pago.moneda|default:"-" }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Responsable Pago</dt><dd class="mt-1 text-gray-900">{{ pago.responsable_pago.get_full_name|default:pago.responsable_pago.username|default:"-" }}</dd></div>
+      <div class="sm:col-span-3"><dt class="font-medium text-gray-500">Adjunto</dt><dd class="mt-1">{% if pago.adjunto_documento %}<a href="{{ pago.adjunto_documento.url }}" target="_blank" class="text-indigo-600 hover:underline inline-flex items-center"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>Ver Adjunto</a>{% else %}-{% endif %}</dd></div>
+      <div class="sm:col-span-3"><dt class="font-medium text-gray-500">Grupo / Concepto Pago</dt><dd class="mt-1 text-gray-900">{{ pago.grupo_concepto|default:"-" }}</dd></div>
+      <div class="sm:col-span-3"><dt class="font-medium text-gray-500">Comentarios</dt><dd class="mt-1 text-gray-800 prose prose-sm max-w-none">{{ pago.comentarios|linebreaksbr|default:"-" }}</dd></div>
+    </dl>
+  </section>
+
+  <section class="mb-8">
+    <h2 class="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-2 mb-4">Valores y Estado</h2>
+    <dl class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4 text-sm">
+      <div><dt class="font-medium text-gray-500">Subtotal</dt><dd class="mt-1 text-gray-900 font-mono">{{ pago.moneda }} {{ pago.subtotal|floatformat:2|intcomma }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Impuestos</dt><dd class="mt-1 text-gray-900 font-mono">{{ pago.moneda }} {{ pago.impuestos|floatformat:2|intcomma }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Total a Pagar</dt><dd class="mt-1 text-gray-900 font-bold font-mono text-base">{{ pago.moneda }} {{ pago.total_factura|floatformat:2|intcomma }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Nº Cuotas</dt><dd class="mt-1 text-gray-900">{{ pago.numero_cuotas }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Vencimiento Inicial</dt><dd class="mt-1 text-gray-900">{{ pago.fecha_vencimiento_inicial|date:"d/m/Y"|default:"-" }}</dd></div>
+      <div><dt class="font-medium text-gray-500">Estatus General</dt><dd class="mt-1">{% include 'gestion/partials/estatus_badge.html' with estatus=pago.estatus %}</dd></div>
+    </dl>
+  </section>
+
+  <section>
+    <h2 class="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-2 mb-4">Detalle de Cuotas de Pago</h2>
+    {% with cuotas=pago.cuotas_pago.all %}
+      {% if cuotas %}
+        <div class="overflow-x-auto border border-gray-200 rounded-lg">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimiento</th>
+                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Monto Cuota</th>
+                <th class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estatus</th>
+                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">F. Pago Real</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for cuota in cuotas %}
+                <tr class="hover:bg-gray-50 text-sm">
+                  <td class="px-4 py-2 text-center whitespace-nowrap">{{ cuota.numero_cuota }}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ cuota.fecha_vencimiento|date:"d/m/Y" }}</td>
+                  <td class="px-4 py-2 text-right font-mono whitespace-nowrap">{{ pago.moneda }} {{ cuota.monto_cuota|floatformat:2|intcomma }}</td>
+                  <td class="px-4 py-2 text-center whitespace-nowrap">{% include 'gestion/partials/estatus_badge.html' with estatus=cuota.estatus %}</td>
+                  <td class="px-4 py-2 whitespace-nowrap">{{ cuota.fecha_pago_real|date:"d/m/Y"|default:"-" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-center text-gray-500 italic py-4">No se han generado cuotas para este pago aún.</p>
+      {% endif %}
+    {% endwith %}
+  </section>
+
+  <section class="mt-6 pt-4 border-t border-gray-200 text-xs text-gray-500">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <p>Registrado por: <span class="text-gray-700">{{ pago.creado_por.username|default:"-" }}</span> el <span class="text-gray-700">{{ pago.creado_en|date:"d/m/Y H:i" }}</span></p>
+      <p>Última act. por: <span class="text-gray-700">{{ pago.actualizado_por.username|default:"-" }}</span> el <span class="text-gray-700">{{ pago.actualizado_en|date:"d/m/Y H:i" }}</span></p>
+    </div>
+  </section>
+</div>
+{% endblock content %}
