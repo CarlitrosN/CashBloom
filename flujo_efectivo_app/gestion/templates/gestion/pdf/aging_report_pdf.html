@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Aging Report - {{ empresa_nombre }}</title>
+    <style>
+        @page { size: A4 landscape; margin: 1.5cm; } /* Orientación horizontal */
+        body { font-family: sans-serif; font-size: 9pt; }
+        h1 { text-align: center; color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 5px;}
+        h2 { font-size: 10pt; color: #555; margin-top: 15px; margin-bottom: 5px;}
+        .header-info { font-size: 8pt; margin-bottom: 15px; text-align: center; color: #666; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 4px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        .currency { text-align: right; }
+        .total-row th, .total-row td { font-weight: bold; border-top: 2px solid #aaa; }
+        .vencido-90 { color: #a00; font-weight: bold; } /* Rojo para >90 días */
+        .cliente-group { font-weight: bold; background-color: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>Reporte de Antigüedad de Saldos por Cobrar</h1>
+    <div class="header-info">
+        Empresa: {{ empresa_nombre }} | Moneda: {{ moneda_base }} | Fecha: {{ fecha_reporte|date:"d/m/Y H:i" }}
+        {# Aquí podrías añadir los filtros aplicados si los pasas en context_pdf #}
+    </div>
+
+    <h2>Resumen por Rango</h2>
+    <table>
+        <thead>
+            <tr><th>Rango</th><th class="currency">Total Pendiente</th><th># Cuotas</th></tr>
+        </thead>
+        <tbody>
+            {% for rango, data in aging_summary.items %}
+                {% if rango != 'total_general' %}
+                <tr>
+                    <td>{% if rango == '0_30' %}0–30{% elif rango == '31_60' %}31–60{% elif rango == '61_90' %}61–90{% else %}>90{% endif %} días</td>
+                    <td class="currency {% if rango == 'mas_90' %}vencido-90{% endif %}">{{ moneda_base }} {{ data.total|default:"0.00"|floatformat:2 }}</td>
+                    <td style="text-align:center;">{{ data.count|default:0 }}</td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </tbody>
+        <tfoot>
+             {% with tg=aging_summary.total_general %}
+            <tr class="total-row">
+                <th>Total General Vencido</th>
+                <td class="currency">{{ moneda_base }} {{ tg.total|default:"0.00"|floatformat:2 }}</td>
+                <td style="text-align:center;">{{ tg.count|default:0 }}</td>
+            </tr>
+            {% endwith %}
+        </tfoot>
+    </table>
+
+    <h2>Detalle por Cliente</h2>
+    <table>
+         <thead>
+             <tr>
+                <th>Cliente</th>
+                <th class="currency">0-30 Días</th>
+                <th class="currency">31-60 Días</th>
+                <th class="currency">61-90 Días</th>
+                <th class="currency">>90 Días</th>
+                <th class="currency">Total Cliente</th>
+            </tr>
+         </thead>
+         <tbody>
+            {% for cliente, data in aging_detail.items %}
+                 <tr>
+                    <td>{{ cliente.nombre }}</td>
+                    <td class="currency">{{ moneda_base }} {{ data.0_30|default:"0.00"|floatformat:2 }}</td>
+                    <td class="currency">{{ moneda_base }} {{ data.31_60|default:"0.00"|floatformat:2 }}</td>
+                    <td class="currency">{{ moneda_base }} {{ data.61_90|default:"0.00"|floatformat:2 }}</td>
+                    <td class="currency vencido-90">{{ moneda_base }} {{ data.mas_90|default:"0.00"|floatformat:2 }}</td>
+                    <td class="currency">{{ moneda_base }} {{ data.total_cliente|default:"0.00"|floatformat:2 }}</td>
+                 </tr>
+            {% empty %}
+                 <tr><td colspan="6" style="text-align:center; font-style:italic;">No hay detalle de clientes vencidos para mostrar.</td></tr>
+            {% endfor %}
+         </tbody>
+         {# Puedes añadir una fila de totales aquí si quieres repetir el total general #}
+    </table>
+
+</body>
+</html>
