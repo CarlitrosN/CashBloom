@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load widget_tweaks %} {# Asumiendo que lo estás usando #}
+
+{% block title %}{{ titulo_pagina|default:"Formulario Venta Proyectada" }}{% endblock title %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 mb-6">{{ titulo_pagina }}</h1>
+
+<form method="post" enctype="multipart/form-data" class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200 space-y-6 max-w-4xl mx-auto">
+    {% csrf_token %}
+
+    {# --- Errores Generales --- #}
+    {% if form.non_field_errors %}
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+            <p class="font-bold">Error General</p>
+            <ul class="list-disc list-inside text-sm">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+    {% endif %}
+
+    {# --- Campos Principales --- #}
+    <section>
+         <h2 class="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-2 mb-4">Detalles de la Proyección</h2>
+         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
+
+            {# Columna 1 #}
+            <div class="space-y-1 lg:col-span-2">
+                <label for="{{ form.cliente.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.cliente.label }}</label>
+                {% render_field form.cliente %}
+                {% if form.cliente.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.cliente.errors|striptags }}</p>{% endif %}
+            </div>
+             <div class="space-y-1">
+                <label for="{{ form.codigo_oportunidad.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.codigo_oportunidad.label }}</label>
+                {% render_field form.codigo_oportunidad %}
+                {% if form.codigo_oportunidad.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.codigo_oportunidad.errors|striptags }}</p>{% endif %}
+            </div>
+             <div class="space-y-1">
+                <label for="{{ form.grupo_concepto.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.grupo_concepto.label }}</label>
+                {% render_field form.grupo_concepto placeholder="Ej: Licencia Software, Consultoría..." %}
+                {% if form.grupo_concepto.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.grupo_concepto.errors|striptags }}</p>{% endif %}
+            </div>
+             <div class="space-y-1">
+                <label for="{{ form.estatus.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.estatus.label }}{% if form.estatus.field.required %} (*){% endif %}</label>
+                {% render_field form.estatus %}
+                {% if form.estatus.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.estatus.errors|striptags }}</p>{% endif %}
+            </div>
+             <div class="space-y-1">
+                <label for="{{ form.pais_venta.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.pais_venta.label }}</label>
+                {% render_field form.pais_venta %}
+                {% if form.pais_venta.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.pais_venta.errors|striptags }}</p>{% endif %}
+            </div>
+
+            {# Columna 2 #}
+            <div class="space-y-1">
+                <label for="{{ form.asesor_comercial.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.asesor_comercial.label }}</label>
+                {% render_field form.asesor_comercial %}
+                 {% if form.asesor_comercial.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.asesor_comercial.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="space-y-1">
+                <label for="{{ form.responsable_seguimiento.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.responsable_seguimiento.label }}</label>
+                {% render_field form.responsable_seguimiento %}
+                 {% if form.responsable_seguimiento.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.responsable_seguimiento.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="space-y-1">
+                <label for="{{ form.fecha_cierre_estimada.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.fecha_cierre_estimada.label }}{% if form.fecha_cierre_estimada.field.required %} (*){% endif %}</label>
+                 {% render_field form.fecha_cierre_estimada type="date" %}
+                {% if form.fecha_cierre_estimada.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.fecha_cierre_estimada.errors|striptags }}</p>{% endif %}
+            </div>
+
+            {# Columna 3 - Valores Monetarios #}
+            <div class="space-y-1">
+                <label for="{{ form.valor_total_estimado.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.valor_total_estimado.label }}{% if form.valor_total_estimado.field.required %} (*){% endif %}</label>
+                 <div class="relative mt-1">
+                    {% render_field form.valor_total_estimado type="number" step="0.01" placeholder="0.00" class+="pr-12 text-right" %} {# Padding para moneda #}
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                      <span class="text-gray-500 sm:text-sm" id="currency-symbol-valor">
+                          {# Mostrar moneda del form si existe, si no, default (ej: USD) #}
+                          {# Necesitaríamos pasar la moneda al form o detectarla con JS #}
+                          {{ form.instance.moneda|default:"USD" }} {# Mostrar moneda actual o default #}
+                      </span>
+                    </div>
+                 </div>
+                {% if form.valor_total_estimado.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.valor_total_estimado.errors|striptags }}</p>{% endif %}
+            </div>
+            {# --- CAMPO MONEDA AÑADIDO --- #}
+            <div class="space-y-1">
+                <label for="{{ form.moneda.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.moneda.label }}{% if form.moneda.field.required %} (*){% endif %}</label>
+                {% render_field form.moneda placeholder="Ej: USD, EUR, COP" %}
+                {% if form.moneda.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.moneda.errors|striptags }}</p>{% endif %}
+                {% if form.moneda.help_text %}<p class="text-gray-500 text-xs italic mt-1">{{ form.moneda.help_text }}</p>{% endif %}
+            </div>
+            <div class="space-y-1">
+                <label for="{{ form.porcentaje_margen.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.porcentaje_margen.label }}</label>
+                <div class="relative mt-1">
+                    {% render_field form.porcentaje_margen type="number" step="0.01" placeholder="0.00" min="0" max="100" class+="pr-7 text-right" %} {# Padding para % #}
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                      <span class="text-gray-500 sm:text-sm">%</span>
+                    </div>
+                </div>
+                {% if form.porcentaje_margen.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.porcentaje_margen.errors|striptags }}</p>{% endif %}
+            </div>
+
+            {# Campos que ocupan ancho completo #}
+             <div class="space-y-1 md:col-span-2 lg:col-span-3">
+                 <label for="{{ form.descripcion.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.descripcion.label }}</label>
+                 {% render_field form.descripcion rows="3" %}
+                  {% if form.descripcion.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.descripcion.errors|striptags }}</p>{% endif %}
+             </div>
+              <div class="space-y-1 md:col-span-2 lg:col-span-3">
+                 <label for="{{ form.comentarios.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.comentarios.label }}</label>
+                 {% render_field form.comentarios rows="2" %}
+                  {% if form.comentarios.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.comentarios.errors|striptags }}</p>{% endif %}
+             </div>
+         </div>
+    </section>
+
+    {# Botones de Acción #}
+    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+         <a href="{% if form.instance.pk %}{% url 'gestion:venta_proyectada_detail' form.instance.pk %}{% else %}{% url 'gestion:pipeline_ventas' %}{% endif %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-sm transition duration-300 ease-in-out">Cancelar</a>
+        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition duration-300 ease-in-out">
+            {% if form.instance.pk %}Actualizar Proyección{% else %}Guardar Proyección{% endif %}
+        </button>
+    </div>
+
+</form>
+{% endblock content %}
+
+{% block extra_scripts %}
+{# Opcional: JS para actualizar el símbolo de moneda junto al valor estimado cuando cambie el campo moneda #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const monedaSelect = document.getElementById('{{ form.moneda.id_for_label }}'); // Asumiendo que tienes form.moneda
+    const valorSymbol = document.getElementById('currency-symbol-valor');
+
+    if (monedaSelect && valorSymbol) {
+        // Función para actualizar el símbolo
+        const updateSymbol = () => {
+            const selectedMoneda = monedaSelect.value || 'USD'; // Default si está vacío
+            // Podríamos usar Intl.NumberFormat para obtener el símbolo, pero es más complejo
+            // Por ahora, mostramos el código ISO
+            valorSymbol.textContent = selectedMoneda;
+        };
+
+        // Actualizar al cargar la página
+        updateSymbol();
+
+        // Actualizar cuando cambie la selección
+        monedaSelect.addEventListener('change', updateSymbol);
+    }
+});
+</script>
+{% endblock extra_scripts %}
