@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load widget_tweaks %} {# Opcional: Si usas widget_tweaks para los filtros #}
+
+{% block title %}{{ titulo_pagina|default:"Ocurrencias de Gastos" }}{% endblock title %}
+
+{% block content %}
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h1 class="text-3xl font-bold text-gray-800">{{ titulo_pagina|default:"Ocurrencias de Gastos" }}</h1>
+        {# No hay botón "Nuevo" aquí, se generan desde el comando #}
+    </div>
+
+    {# --- Formulario de Filtros --- #}
+    <div class="mb-6 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+        <form method="get" action="{% url 'gestion:ocurrencia_gasto_list' %}" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {# Filtro por Estado #}
+                <div>
+                    <label for="f_estatus" class="block text-xs font-medium text-gray-600">Estado</label>
+                    <select name="estatus" id="f_estatus" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 text-sm">
+                        <option value="">Todos</option>
+                        {% for value, label in estatus_choices %}
+                             {# Seleccionar 'PENDIENTE' por defecto si filtros.estatus no existe #}
+                            <option value="{{ value }}" {% if filtros.estatus == value or not filtros.estatus and value == 'PEND' %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                 {# Filtro por Gasto Recurrente (Plantilla) #}
+                <div>
+                    <label for="f_gasto_recurrente_id" class="block text-xs font-medium text-gray-600">Plantilla Gasto</label>
+                    <select name="gasto_recurrente_id" id="f_gasto_recurrente_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 text-sm">
+                        <option value="">Todas</option>
+                        {% for gasto in gasto_recurrente_choices %}
+                            <option value="{{ gasto.pk }}" {% if filtros.gasto_recurrente_id == gasto.pk|stringformat:"s" %}selected{% endif %}>{{ gasto.descripcion|truncatechars:40 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {# Filtro Fecha Vencimiento Desde #}
+                <div>
+                     <label for="f_fecha_desde" class="block text-xs font-medium text-gray-600">Vencimiento Desde</label>
+                     <input type="date" name="fecha_desde" id="f_fecha_desde" value="{{ filtros.fecha_desde|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 text-sm">
+                </div>
+                 {# Filtro Fecha Vencimiento Hasta #}
+                <div>
+                     <label for="f_fecha_hasta" class="block text-xs font-medium text-gray-600">Vencimiento Hasta</label>
+                     <input type="date" name="fecha_hasta" id="f_fecha_hasta" value="{{ filtros.fecha_hasta|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 text-sm">
+                </div>
+                {# Búsqueda General (ajustada para ocupar espacio restante) #}
+                 <div class="sm:col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-1"> {# Ajusta el span según necesidad #}
+                     <label for="search-q" class="block text-xs font-medium text-gray-600">Búsqueda General</label>
+                     <input type="text" name="q" id="search-q" placeholder="Buscar en descripción, concepto, responsable, comentarios..." value="{{ query|default:'' }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 text-sm">
+                 </div>
+            </div>
+            <div class="flex justify-end space-x-2 pt-2">
+                <a href="{% url 'gestion:ocurrencia_gasto_list' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow text-sm transition duration-300 ease-in-out">Limpiar Filtros</a>
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow transition duration-300 ease-in-out text-sm">Filtrar / Buscar</button>
+            </div>
+        </form>
+    </div>
+
+    {# --- Tabla de Ocurrencias --- #}
+    <div class="bg-white shadow-md rounded-lg overflow-hidden border border-gray-200">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 quick-list">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gasto (Plantilla)</th>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimiento</th>
+                        <th scope="col" class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Monto</th>
+                        <th scope="col" class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Estatus</th>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">F. Pago Real</th>
+                        <th scope="col" class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Pagado Por</th>
+                        <th scope="col" class="px-5 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">Días Venc.</th>
+                        <th scope="col" class="px-5 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for oc in ocurrencias %} {# 'ocurrencias' es context_object_name #}
+                    <tr class="hover:bg-indigo-50 transition duration-150 ease-in-out">
+                        <td class="px-5 py-4 whitespace-nowrap text-sm font-medium text-gray-800" title="{{ oc.gasto_recurrente.descripcion }}">
+                             {# Enlace al detalle de la plantilla #}
+                            <a href="{% url 'gestion:gasto_recurrente_detail' oc.gasto_recurrente.pk %}" class="text-indigo-600 hover:underline">
+                                {{ oc.gasto_recurrente.descripcion|truncatechars:35|default:"-" }}
+                            </a>
+                        </td>
+                        <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-500">{{ oc.fecha_vencimiento|date:"d/m/Y" }}</td>
+                        <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-mono">
+                           {# Mostrar moneda de la plantilla padre #}
+                           {{ oc.gasto_recurrente.moneda }} {{ oc.monto|floatformat:2|intcomma }}
+                        </td>
+                        <td class="px-5 py-4 whitespace-nowrap text-center text-xs">
+                            {# Reutilizar el badge de estatus general #}
+                            {% include 'gestion/partials/estatus_badge.html' with estatus=oc.estatus %}
+                        </td>
+                        <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">{{ oc.fecha_pago_real|date:"d/m/Y"|default:"-" }}</td>
+                        <td class="px-5 py-4 whitespace-nowrap text-sm text-gray-500 hidden lg:table-cell">{{ oc.pagado_por.username|default:"-" }}</td>
+                        <td class="px-5 py-4 whitespace-nowrap text-sm text-right hidden md:table-cell {% if oc.antiguedad_vencimiento > 0 and oc.estatus == 'PEND' %} text-red-600 font-semibold {% else %} text-gray-500 {% endif %}">
+                           {{ oc.antiguedad_vencimiento|default:"0" }}
+                        </td>
+                        <td class="px-5 py-4 whitespace-nowrap text-center text-sm font-medium">
+                            <a href="{% url 'gestion:ocurrencia_gasto_update' oc.pk %}" class="text-green-600 hover:text-green-800" title="Editar/Registrar Pago">
+                               <svg class="w-5 h-5 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </a>
+                            {# No suele haber botón de borrar ocurrencias individuales #}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-10 text-center text-gray-500 italic">
+                            No se encontraron ocurrencias de gastos {% if query or filtros.estatus or filtros.fecha_desde or filtros.fecha_hasta or filtros.gasto_recurrente_id %} con los filtros aplicados{% endif %}.
+                            <br>
+                            <span class="text-xs">(Asegúrate de haber ejecutado el comando 'generar_ocurrencias')</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+         {# --- Paginación --- #}
+         {% include 'gestion/partials/pagination.html' with pagination_params=filtros.urlencode %}
+    </div>
+{% endblock content %}
