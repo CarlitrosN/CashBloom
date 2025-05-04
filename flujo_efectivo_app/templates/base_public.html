@@ -1,0 +1,21 @@
+    {% load static tailwind_tags i18n %}
+    <!DOCTYPE html>
+    <html lang="{{ LANGUAGE_CODE|default:"es" }}">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}CashBloom{% endblock title %} | CashBloom</title>
+        {% tailwind_css %}
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+        {% block extra_head %}{% endblock extra_head %}
+         <style> body { font-family: 'Inter', sans-serif; } </style> {# Fuente base #}
+    </head>
+    <body class="bg-gray-100">
+        {# No hay sidebar ni header aquí #}
+        {% block content %}
+        {# El contenido específico de la página (ej: el formulario de login) irá aquí #}
+        {% endblock content %}
+
+        {% block extra_scripts %}{% endblock extra_scripts %}
+    </body>
+    </html>
