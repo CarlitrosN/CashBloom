@@ -1,0 +1,145 @@
+
+{% extends "base.html" %}
+{% load humanize %}
+{% load widget_tweaks %}
+
+{% block title %}{{ titulo_pagina|default:"Formulario Cliente" }}{% endblock title %}
+
+{% block content %}
+<h1 class="text-3xl font-bold text-gray-800 mb-6 pt-6">{{ titulo_pagina }}</h1>
+
+<form method="post" enctype="multipart/form-data" class="bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-200 space-y-6">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+            <p class="font-bold">Error General</p>
+            <ul class="list-disc list-inside text-sm">{% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+    {% endif %}
+
+    <section>
+        <h2 class="text-xl font-semibold text-gray-700 border-b border-gray-200 pb-2 mb-4">Información del Cliente</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+            <div class="space-y-1">
+                <label for="{{ form.identificacion.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.identificacion.label }}{% if form.identificacion.field.required %} (*){% endif %}</label>
+                {% render_field form.identificacion placeholder="Ej: 1234567890" class+="form-input text-sm" %}
+                {% if form.identificacion.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.identificacion.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="space-y-1">
+                <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.nombre.label }}{% if form.nombre.field.required %} (*){% endif %}</label>
+                {% render_field form.nombre placeholder="Ej: Juan Pérez" class+="form-input text-sm" %}
+                {% if form.nombre.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.nombre.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="space-y-1">
+                <label for="{{ form.telefono.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.telefono.label }}{% if form.telefono.field.required %} (*){% endif %}</label>
+                {% render_field form.telefono placeholder="Ej: 0999999999" class+="form-input text-sm" %}
+                {% if form.telefono.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.telefono.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="space-y-1">
+                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.email.label }}{% if form.email.field.required %} (*){% endif %}</label>
+                {% render_field form.email type="email" placeholder="correo@ejemplo.com" class+="form-input text-sm" %}
+                {% if form.email.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.email.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="space-y-1">
+                <label for="{{ form.pais.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.pais.label }}{% if form.pais.field.required %} (*){% endif %}</label>
+                {% render_field form.pais class+="form-input text-sm" %}
+                {% if form.pais.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.pais.errors|striptags }}</p>{% endif %}
+            </div>
+            <div class="space-y-1">
+                <label for="{{ form.tags.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.tags.label }}{% if form.tags.field.required %} (*){% endif %}</label>
+                {% render_field form.tags class+="form-input text-sm" %}
+                {% if form.tags.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.tags.errors|striptags }}</p>{% endif %}
+                {% if form.tags.help_text %}<p class="text-gray-500 text-xs italic mt-1">{{ form.tags.help_text }}</p>{% endif %}
+            </div>
+            <div class="space-y-1 md:col-span-2">
+                <label for="{{ form.direccion.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.direccion.label }}{% if form.direccion.field.required %} (*){% endif %}</label>
+                {% render_field form.direccion rows="3" placeholder="Dirección del cliente..." class+="form-input text-sm" %}
+                {% if form.direccion.errors %}<p class="text-red-600 text-xs italic mt-1">{{ form.direccion.errors|striptags }}</p>{% endif %}
+            </div>
+        </div>
+    </section>
+
+    {% if form.instance.pk and contacto_formset %}
+    <section class="mt-8 pt-6 border-t border-gray-200" id="contactos">
+        <h2 class="text-xl font-semibold text-gray-700 mb-4">Contactos Asociados</h2>
+        <p class="text-xs text-gray-500 mb-4">Añada, edite o marque contactos para eliminar.</p>
+
+        {% if contacto_formset.non_form_errors %}
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4" role="alert">
+            <p class="font-bold">Errores en Contactos:</p>
+            <ul class="list-disc list-inside text-sm">{% for error in contacto_formset.non_form_errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+        {% endif %}
+
+        <div class="space-y-4">
+            {{ contacto_formset.management_form }}
+
+            {% for form_contacto in contacto_formset %}
+            <div class="p-4 border border-gray-200 rounded-md {% if form_contacto.errors %} border-red-300 bg-red-50 {% endif %}">
+                {% for hidden_field in form_contacto.hidden_fields %}{{ hidden_field }}{% endfor %}
+
+                {% if form_contacto.non_field_errors %}
+                <div class="text-red-600 text-xs mb-2">{{ form_contacto.non_field_errors|striptags }}</div>
+                {% endif %}
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <div class="space-y-1 sm:col-span-2 md:col-span-1">
+                        <label for="{{ form_contacto.nombre.id_for_label }}" class="block text-xs font-medium text-gray-600">{{ form_contacto.nombre.label }}{% if form_contacto.nombre.field.required %} (*){% endif %}</label>
+                        {% render_field form_contacto.nombre class+="text-sm form-input" %}
+                        {% if form_contacto.nombre.errors %}<p class="text-red-600 text-xs italic">{{ form_contacto.nombre.errors|striptags }}</p>{% endif %}
+                    </div>
+                    <div class="space-y-1">
+                        <label for="{{ form_contacto.cargo.id_for_label }}" class="block text-xs font-medium text-gray-600">{{ form_contacto.cargo.label }}</label>
+                        {% render_field form_contacto.cargo class+="text-sm form-input" %}
+                        {% if form_contacto.cargo.errors %}<p class="text-red-600 text-xs italic">{{ form_contacto.cargo.errors|striptags }}</p>{% endif %}
+                    </div>
+                    <div class="space-y-1">
+                        <label for="{{ form_contacto.email.id_for_label }}" class="block text-xs font-medium text-gray-600">{{ form_contacto.email.label }}</label>
+                        {% render_field form_contacto.email type="email" class+="text-sm form-input" %}
+                        {% if form_contacto.email.errors %}<p class="text-red-600 text-xs italic">{{ form_contacto.email.errors|striptags }}</p>{% endif %}
+                    </div>
+                    <div class="space-y-1">
+                        <label for="{{ form_contacto.telefono_directo.id_for_label }}" class="block text-xs font-medium text-gray-600">{{ form_contacto.telefono_directo.label }}</label>
+                        {% render_field form_contacto.telefono_directo class+="text-sm form-input" %}
+                        {% if form_contacto.telefono_directo.errors %}<p class="text-red-600 text-xs italic">{{ form_contacto.telefono_directo.errors|striptags }}</p>{% endif %}
+                    </div>
+                    <div class="space-y-1">
+                        <label for="{{ form_contacto.celular.id_for_label }}" class="block text-xs font-medium text-gray-600">{{ form_contacto.celular.label }}</label>
+                        {% render_field form_contacto.celular class+="text-sm form-input" %}
+                        {% if form_contacto.celular.errors %}<p class="text-red-600 text-xs italic">{{ form_contacto.celular.errors|striptags }}</p>{% endif %}
+                    </div>
+                    <div class="space-y-1 sm:col-span-2 md:col-span-3 lg:col-span-2">
+                        <label for="{{ form_contacto.observaciones.id_for_label }}" class="block text-xs font-medium text-gray-600">{{ form_contacto.observaciones.label }}</label>
+                        {% render_field form_contacto.observaciones rows="1" class+="text-sm form-input" %}
+                        {% if form_contacto.observaciones.errors %}<p class="text-red-600 text-xs italic">{{ form_contacto.observaciones.errors|striptags }}</p>{% endif %}
+                    </div>
+                    <div class="flex items-center space-x-4 pt-3">
+                        <div class="flex items-center">
+                            {% render_field form_contacto.es_principal %}
+                            <label for="{{ form_contacto.es_principal.id_for_label }}" class="ml-2 block text-xs font-medium text-gray-700">{{ form_contacto.es_principal.label }}</label>
+                        </div>
+                        {% if contacto_formset.can_delete %}
+                        <div class="flex items-center">
+                            {% render_field form_contacto.DELETE %}
+                            <label for="{{ form_contacto.DELETE.id_for_label }}" class="ml-2 block text-xs font-medium text-red-600">Marcar para eliminar</label>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-center text-gray-500 italic py-4">No hay contactos asociados. Puede añadir uno nuevo.</p>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200 mt-6">
+        <a href="{% if form.instance.pk %}{% url 'gestion:cliente_detail' form.instance.pk %}{% else %}{% url 'gestion:cliente_list' %}{% endif %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-4 rounded-lg shadow-sm transition duration-300 ease-in-out">Cancelar</a>
+        <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm hover:shadow-md transition duration-300 ease-in-out">
+            {% if form.instance.pk %}Actualizar Cliente{% else %}Guardar Cliente{% endif %}
+        </button>
+    </div>
+</form>
+{% endblock content %}
